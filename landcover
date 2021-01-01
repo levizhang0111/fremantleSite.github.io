@@ -1,0 +1,177 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Fremantle land cover</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta name="robots" content="noindex, nofollow" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css" rel="stylesheet" />
+
+  
+ 
+ <style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; z-index:-3}
+  #title {
+  top: 0;
+  left: 20px;
+  height: 120px;
+  margin-top: 20px;
+  width: 480px;
+}
+
+
+.map-overlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.5);
+  margin-right: 15px;
+  font-family: "Times New Roman", Times, serif;
+  overflow: auto;
+  border-radius: 4px;
+  z-index:-2
+}
+
+#sliderbar{
+  position:absolute;
+    left:100px;
+    bottom:0px;
+    font-size: 2px
+}
+
+#filters{ position:absolute;
+    left:100px;
+    bottom:70px;
+    font-size: 2px
+  
+}
+
+
+</style>
+
+</head>
+
+<body>
+<div id="map"></div>
+<div class='map-overlay' id='title'>
+  <h2>Land cover change in Fremantle </h2>
+    <div id='info'>
+     <p>LULC change monitored by high resolution remote sensing images</p>
+    </div>
+</div>
+ 
+ <div id="console">
+
+ <div class='session' id='sliderbar'>
+  <h2>Land cover change: <label id='concrete-year'>2019</label></h2>
+  <input id='slider' class='slider' type='range' min='2015' max='2020' step='1' value='2019' />
+</div>
+
+
+<div class='session'>
+  
+  <div class='row' id='filters'>
+    <input id='concrete' type='radio' name='toggle' value='concrete' checked='checked'>
+    <label for='concrete'>concrete</label>
+    <input id='urban' type='radio' name='toggle' value='urban'>
+    <label for='urban'>urban</label>
+    <input id='vegetation' type='radio' name='toggle' value='vegetation'>
+    <label for='vegetation'>vegetation</label>
+  </div>
+</div>
+
+
+</div>
+ 
+ </body> 
+ 
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+ 
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1IjoiemVodWF6MyIsImEiOiJjanp1Z2J1OGswMDF1M2JueTlycGVnMGYyIn0.voCWLCOyVfkRb_lH4hpmIg';
+
+var map = new mapboxgl.Map({
+container: 'map',
+style: 'mapbox://styles/zehuaz3/ckj9ftx4i2v3b1amsdkcrzsgc',
+center: [115.75, -32.04],
+zoom: 12
+});
+
+var Years = [2015,2016,2017,2018,2019,2020];
+
+//function filterBy(Year) {
+//var filters = ['==', 'Year', Year];
+//map.setFilter('concrete-lines', filters);
+//document.getElementById('Year').textContent = Year.toString;
+//}
+
+
+map.on('load', function () {
+var filterYear = ['==', ['number', ['get', 'Year']], 2019];
+var filterType = ['match', ['get', 'Type'], 'concrete', true, false];
+map.addControl(new mapboxgl.NavigationControl());
+d3.json('https://raw.githubusercontent.com/levizhang0111/Fremantle.github.io/gh-pages/mergedLandCover.geojson', function(err, data) {
+        if (err) throw err;
+        data.features = data.features.map(function(d) {
+        return d;
+        });
+        
+ map.addSource('concrete', {
+            'type': 'geojson',
+            'data': data
+        });
+        
+ map.addLayer({
+            'id': 'concrete-lines',
+            'type': 'line',
+            'source': 'concrete',
+            
+            'paint': {
+            'line-color': "#663333",
+            'line-width': 2,
+            'line-opacity': 0.5
+            },
+             'filter': ['all', filterYear, filterType]
+        });
+        
+        
+    // filterBy(2019);
+        
+document.getElementById('slider').addEventListener('input', function(e){
+var year = parseInt(e.target.value);
+filterYear = ['==', ['number',['get', 'Year']],year];
+map.setFilter('concrete-lines',['all', filterYear, filterType]);
+//map.setFilter('concrete-lines', ['==', ['number',['get', 'Year']],year]);
+
+document.getElementById('concrete-year').innerText = year;
+});
+
+document.getElementById('filters').addEventListener('change', function(e) {
+  var type = e.target.value;
+  // update the map filter
+  if (type === 'concrete') {
+    filterType = ['match', ['get', 'Type'], 'concrete', true, false];
+  } else if (type === 'urban') {
+    filterType = ['match', ['get', 'Type'], 'urban', true, false];
+  } else if (type === 'vegetation') {
+    filterType = ['match', ['get', 'Type'], 'vegetation', true, false];
+  } else {
+    console.log('error');
+  }
+  map.setFilter('concrete-lines', ['all', filterYear, filterType]);
+});
+
+});
+        
+      
+});
+
+
+
+
+
+</script>
+ 
+
+</html>
